@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}{% endblock %}</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 720px;
+            margin: 2rem auto;
+        }
+
+        .flash {
+            padding: .75rem 1rem;
+            border-radius: .5rem;
+            margin: .5rem 0;
+        }
+
+            .flash.success {
+                background: #e6ffed;
+            }
+
+            .flash.error {
+                background: #ffeaea;
+            }
+
+            .flash.info {
+                background: #eef6ff;
+            }
+
+            .flash.warning {
+                background: #fff7e6;
+            }
+
+        form input {
+            margin: .25rem 0 .75rem;
+            width: 100%;
+            max-width: 28rem;
+            padding: .5rem;
+        }
+
+        button {
+            padding: .5rem .9rem;
+            border-radius: .5rem;
+            border: 1px solid #ddd;
+            cursor: pointer;
+        }
+
+        a {
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}My chats{% endblock %}
+{% block content %}
+<h2>Your chats</h2>
+<form action="{{ url_for('new_chat') }}" method="POST" style="margin-bottom:1rem;">
+    <button type="submit">+ New chat</button>
+</form>
+<ul>
+    {% for c in conversations %}
+    <li>
+        <a href="{{ url_for('chat', conversation_id=c.id) }}">{{ c.title }}</a>
+        <small> · {{ c.updated_at.strftime('%Y-%m-%d %H:%M') }}</small>
+    </li>
+    {% else %}
+    <li>No chats yet. Create one.</li>
+    {% endfor %}
+</ul>
+<p><a href="{{ url_for('dashboard') }}">Back to dashboard</a></p>
+{% endblock %}

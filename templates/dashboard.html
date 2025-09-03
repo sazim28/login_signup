@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h2>Welcome, {{ username }}!</h2>
+<form action="{{ url_for('new_chat') }}" method="POST">
+    <button type="submit">+ New chat</button>
+</form>
+<p><a href="{{ url_for('chats') }}">View all chats</a></p>
+<form action="{{ url_for('logout') }}" method="POST" style="margin-top: 1rem;">
+    <button type="submit">Logout</button>
+</form>
+{% endblock %}

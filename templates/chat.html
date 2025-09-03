@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Chat{% endblock %}
+{% block content %}
+<h2>{{ conversation.title }}</h2>
+<div>
+    {% for m in messages %}
+    <div class="flash {{ 'info' if m.role=='assistant' else 'success' }}">
+        <strong>{{ m.role }}:</strong> {{ m.content }}
+    </div>
+    {% else %}
+    <p>No messages yet.</p>
+    {% endfor %}
+</div>
+<form method="POST" style="margin-top:1rem;">
+    <input name="message" placeholder="Type your message..." required>
+    <button type="submit">Send</button>
+</form>
+<p style="margin-top:1rem;"><a href="{{ url_for('chats') }}">Back to all chats</a></p>
+{% endblock %}
