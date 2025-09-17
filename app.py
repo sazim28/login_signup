@@ -25,6 +25,8 @@ db = SQLAlchemy(app)
 # ---------------- Models ----------------
 class User(db.Model):
     id       = db.Column(db.Integer, primary_key=True)
+    name     = db.Column(db.String(150), nullable=False)
+    email    = db.Column(db.String(200), unique=True, nullable=False, index=True)
     username = db.Column(db.String(150), unique=True, nullable=False, index=True)
     password = db.Column(db.String(200), nullable=False)
 
@@ -43,7 +45,7 @@ class Message(db.Model):
     content         = db.Column(db.Text, nullable=False)
     created_at      = db.Column(db.DateTime, default=datetime.utcnow)
 
-# Create tables once
+# Create tables once (local dev will create users.db automatically)
 with app.app_context():
     db.create_all()
 
@@ -73,22 +75,34 @@ def home():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
+        name = request.form['name'].strip()
+        email = request.form['email'].strip().lower()
         username = request.form['username'].strip().lower()
         password = request.form['password']
 
-        if len(username) < 3:
-            flash('Username must be at least 3 characters.', 'error')
-            return redirect(url_for('signup'))
-        if len(password) < 8:
-            flash('Password must be at least 8 characters.', 'error')
+        # Validate name
+        if len(name) < 2:
+            flash('Name must be at least 2 characters.', 'error')
             return redirect(url_for('signup'))
 
-        if User.query.filter_by(username=username).first():
-            flash('Username already exists.', 'error')
+        # Validate email (simple regex)
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            flash('Invalid email address.', 'error')
             return redirect(url_for('signup'))
 
+        # Validate password (min 8, must include letters AND numbers/specials)
+        if len(password) < 8 or not re.search(r"[A-Za-z]", password) or not re.search(r"[\d\W]", password):
+            flash('Password must be at least 8 chars and contain letters and numbers/special characters.', 'error')
+            return redirect(url_for('signup'))
+
+        # Check duplicates (username or email must be unique)
+        if User.query.filter((User.username == username) | (User.email == email)).first():
+            flash('Username or email already exists.', 'error')
+            return redirect(url_for('signup'))
+
+        # Save user
         hashed = generate_password_hash(password)
-        user = User(username=username, password=hashed)
+        user = User(name=name, email=email, username=username, password=hashed)
         db.session.add(user)
         db.session.commit()
 
@@ -153,7 +167,8 @@ def chat(conversation_id):
         user_text = request.form.get('message', '').strip()
         if user_text:
             db.session.add(Message(conversation_id=convo.id, role='user', content=user_text))
-            reply = f"(echo) You said: {user_text}"  # stubbed assistant reply
+            # Stubbed assistant response
+            reply = f"(echo) You said: {user_text}"
             db.session.add(Message(conversation_id=convo.id, role='assistant', content=reply))
 
             if convo.title == "New chat":
@@ -169,4 +184,3 @@ def chat(conversation_id):
 # ------------- Run -------------
 if __name__ == '__main__':
     app.run(debug=True)
-

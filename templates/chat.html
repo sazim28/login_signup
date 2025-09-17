@@ -15,14 +15,18 @@
                 {% if m.role == 'assistant' %}
                 <div class="d-flex">
                     <div class="p-3 rounded-3 bg-white shadow-sm">
-                        <div class="small text-muted mb-1">Assistant</div>
+                        <div class="small text-muted mb-1">
+                            Assistant • {{ m.created_at.strftime('%Y-%m-%d %H:%M') }}
+                        </div>
                         <div>{{ m.content }}</div>
                     </div>
                 </div>
                 {% else %}
                 <div class="d-flex justify-content-end">
                     <div class="p-3 rounded-3 bg-primary text-white">
-                        <div class="small text-white-50 mb-1">You</div>
+                        <div class="small text-white-50 mb-1">
+                            You • {{ m.created_at.strftime('%Y-%m-%d %H:%M') }}
+                        </div>
                         <div>{{ m.content }}</div>
                     </div>
                 </div>
