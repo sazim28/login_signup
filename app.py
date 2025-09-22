@@ -15,8 +15,15 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-change-me')
 
 # Database URL (Postgres on Render, SQLite locally)
 db_url = os.environ.get('DATABASE_URL', 'sqlite:///users.db')
+
+# Normalize for Postgres
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+# Force psycopg3 instead of psycopg2
+if db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -26,7 +33,7 @@ db = SQLAlchemy(app)
 class User(db.Model):
     id       = db.Column(db.Integer, primary_key=True)
     name     = db.Column(db.String(150), nullable=False)
-    email    = db.Column(db.String(200), unique=True, nullable=False, index=True)
+    email    = db.Column(db.String(150), unique=True, nullable=False, index=True)
     username = db.Column(db.String(150), unique=True, nullable=False, index=True)
     password = db.Column(db.String(200), nullable=False)
 
@@ -45,7 +52,7 @@ class Message(db.Model):
     content         = db.Column(db.Text, nullable=False)
     created_at      = db.Column(db.DateTime, default=datetime.utcnow)
 
-# Create tables once (local dev will create users.db automatically)
+# Create tables once
 with app.app_context():
     db.create_all()
 
@@ -80,27 +87,23 @@ def signup():
         username = request.form['username'].strip().lower()
         password = request.form['password']
 
-        # Validate name
+        # Simple validations
         if len(name) < 2:
             flash('Name must be at least 2 characters.', 'error')
             return redirect(url_for('signup'))
 
-        # Validate email (simple regex)
         if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
             flash('Invalid email address.', 'error')
             return redirect(url_for('signup'))
 
-        # Validate password (min 8, must include letters AND numbers/specials)
-        if len(password) < 8 or not re.search(r"[A-Za-z]", password) or not re.search(r"[\d\W]", password):
-            flash('Password must be at least 8 chars and contain letters and numbers/special characters.', 'error')
+        if len(password) < 8 or not re.search(r"[A-Za-z]", password) or not re.search(r"[0-9\W]", password):
+            flash('Password must be at least 8 characters and include letters + numbers/special characters.', 'error')
             return redirect(url_for('signup'))
 
-        # Check duplicates (username or email must be unique)
         if User.query.filter((User.username == username) | (User.email == email)).first():
             flash('Username or email already exists.', 'error')
             return redirect(url_for('signup'))
 
-        # Save user
         hashed = generate_password_hash(password)
         user = User(name=name, email=email, username=username, password=hashed)
         db.session.add(user)
@@ -167,8 +170,7 @@ def chat(conversation_id):
         user_text = request.form.get('message', '').strip()
         if user_text:
             db.session.add(Message(conversation_id=convo.id, role='user', content=user_text))
-            # Stubbed assistant response
-            reply = f"(echo) You said: {user_text}"
+            reply = f"(echo) You said: {user_text}"  # stubbed assistant reply
             db.session.add(Message(conversation_id=convo.id, role='assistant', content=reply))
 
             if convo.title == "New chat":
